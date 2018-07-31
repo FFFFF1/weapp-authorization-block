@@ -1,0 +1,118 @@
+<config>
+{
+    "component": true
+}
+</config>
+
+<style lang="less">
+    .wrapper {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        .auth {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            top: 0;
+            left: 0;
+            z-index: 10;
+        }
+    }
+</style>
+
+<template>
+    <view class="wrapper m-class">
+        <view bind:tap="handleTap">
+            <slot></slot>
+        </view>
+        <block wx:if="{{!authorized}}">
+            <button
+                class="auth"
+                open-type="{{openType}}"
+                bindgetphonenumber="getPhoneNumber"
+                bindgetuserinfo="getUserInfo">
+            </button>
+        </block>
+    </view>
+</template>
+
+<script>
+  import {Component} from '@tinajs/tina'
+  import event from '../../utils/event'
+
+  Component.define({
+    externalClasses: ['m-class'],
+    properties: {
+      openType: {
+        type: String,
+        value: 'getUserInfo'
+      }
+    },
+    data: {
+      authorized: false
+    },
+    methods: {
+      getPhoneNumber ({detail}) {
+        const vm = this
+        if (detail.errMsg === 'getPhoneNumber:ok') {
+          vm._triggerEvent(detail)
+        }
+      },
+      getUserInfo ({detail: {userInfo: {avatarUrl, nickName = ''}, errMsg}}) {
+        const vm = this
+        if (errMsg === 'getUserInfo:ok') {
+          vm.utils.api.users.update({user: {avatar: avatarUrl, name: nickName}}).then(({data: {user}}) => {
+            getApp().globalData.userInfo = user
+            vm._triggerEvent()
+          })
+        }
+      },
+      _triggerEvent (arg) {
+        const vm = this
+        event.triggerEvent([vm.data.config.eventName], true)
+        vm.triggerEvent('action', arg)
+      },
+      handleTap () {
+        const vm = this
+        vm.triggerEvent('action')
+      }
+    },
+    attached () {
+      const vm = this
+      let config
+      switch (vm.data.openType) {
+        case 'getUserInfo':
+          config = {
+            eventName: 'userInfoAuthorized'
+          }
+          break
+        case 'getPhoneNumber':
+          config = {
+            eventName: 'phoneNumberAuthorized'
+          }
+          break
+      }
+      if (getApp().globalData[config.eventName]) {
+        vm.setData({
+          authorized: true
+        })
+      } else {
+        event.addEventListener([config.eventName], vm, (authorized) => {
+          if (authorized) {
+            vm.setData({
+              authorized: true
+            })
+          }
+        })
+      }
+      vm.setData({
+        config
+      })
+    },
+    detached () {
+      const vm = this
+      event.removeEventListener([vm.data.config.eventName], vm)
+    }
+  })
+</script>
