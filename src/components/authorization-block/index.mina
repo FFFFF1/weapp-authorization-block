@@ -56,20 +56,26 @@
       getPhoneNumber ({detail}) {
         const vm = this
         if (detail.errMsg === 'getPhoneNumber:ok') {
+          /*
+          * 获取到用户手机号后的业务代码
+          * */
           vm._triggerEvent(detail)
         }
       },
-      getUserInfo ({detail: {userInfo: {avatarUrl, nickName = ''}, errMsg}}) {
+      getUserInfo ({detail: {userInfo: {avatarUrl, nickName}, errMsg}}) {
         const vm = this
         if (errMsg === 'getUserInfo:ok') {
-          vm.utils.api.users.update({user: {avatar: avatarUrl, name: nickName}}).then(({data: {user}}) => {
-            getApp().globalData.userInfo = user
-            vm._triggerEvent()
-          })
+          /*
+          * 获取到用户信息后的业务代码
+          * */
+          vm._triggerEvent()
         }
       },
       _triggerEvent (arg) {
         const vm = this
+        /*
+        * 触发监听器后，再触发点击区域本身的点击回调
+        * */
         event.triggerEvent([vm.data.config.eventName], true)
         vm.triggerEvent('action', arg)
       },
@@ -84,12 +90,12 @@
       switch (vm.data.openType) {
         case 'getUserInfo':
           config = {
-            eventName: 'userInfoAuthorized'
+            eventName: 'userInfo'
           }
           break
         case 'getPhoneNumber':
           config = {
-            eventName: 'phoneNumberAuthorized'
+            eventName: 'phoneNumber'
           }
           break
       }
