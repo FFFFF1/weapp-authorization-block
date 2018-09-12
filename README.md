@@ -123,9 +123,10 @@
       _triggerEvent (arg) {
         const vm = this
         /*
-        * 触发监听器后，再触发点击区域本身的点击回调
+        * 触发监听器后，更新全局变量，触发点击区域本身的点击回调
         * */
         event.triggerEvent([vm.data.config.eventName], true)
+        getApp().globalData[config.eventName] = true
         vm.triggerEvent('action', arg)
       },
       handleTap () {
